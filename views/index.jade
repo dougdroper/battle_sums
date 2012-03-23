@@ -22,27 +22,33 @@ div.wrong
 
 script
   var socket = io.connect();
-  var first, second, operator, answer;
+  var first, second, operator, answers;
   var your_user;
+  var count = 0;
+  var correct = 0;
+  var wrong = 0;
 
   function updateContent(){
     $("#request").hide();
     $("#users").hide();
     $("#calc_box").show();
-    $("#left").html(first);
-    $("#operation").html(operator);
-    $("#right").html(second);
+    $("#left").html(first[count]);
+    $("#operation").html(operator[count]);
+    $("#right").html(second[count]);
+    $("input#answer").val('');
   }
 
   socket.on('setup', function(data) {
     first = data.first;
     second = data.second;
     operator = data.operator;
+    answers = data.answers
     updateContent();
   });
 
   socket.on('users', function (users) {
     $('#users ul').empty();
+    users.users.splice(users.users.indexOf(your_user), 1);
     for (var i in users.users) {
       $('#users ul').append($('<li>')
       .attr('id', users.users[i])
@@ -101,6 +107,30 @@ script
 
       }
     });
+  });
+
+  function check_answer(){
+    var a = $("input#answer").val();
+    if(a == answers[count]){
+      correct++;
+    } else{
+      wrong++;
+    }
+    count++;
+    updateContent();
+  }
+
+  $("#calc_box input").bind("keypress", function(e){
+    if(e.keyCode == 13){
+      console.log(count);
+      console.log(correct);
+      console.log(wrong);
+      if(count == 9){
+        socket.emit('battle_over', {correct: correct, wrong: wrong})
+      } else{
+        check_answer();
+      }
+    }
   });
 
 

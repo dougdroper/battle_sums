@@ -8,7 +8,10 @@ var express = require('express')
   , sio = require('socket.io')
   , sum = require('./lib/random_sum_generator');
 
-var f, s, o, answer;
+var f = [];
+var s = [];
+var o = [];
+var answers = [];
 var users = [];
 var clients = {};
 
@@ -40,14 +43,30 @@ app.get('/', routes.index);
 app.listen(3000);
 var io = sio.listen(app);
 
-function setup(){
-  f = sum.getRandomNumber();
-  s = sum.getRandomNumber();
-  o = sum.getRandomOperator();
-  answer = eval(f + o + s);
-  if(answer < 0 || answer % 1 != 0){
-    setup();
+function setup_sums(i){
+  f[i] = sum.getRandomNumber();
+  s[i] = sum.getRandomNumber();
+  o[i] = sum.getRandomOperator();
+  answers[i] = eval(f[i] + o[i] + s[i]);
+  if(answers[i] < 0 || answers[i] % 1 != 0){
+    setup_sums(i);
   }
+}
+
+function setup(){
+  for(var i = 0; i < 10; i++){
+    setup_sums(i)
+  }
+}
+
+function online_players(user){
+  var online_players = [];
+  for(var i in users){
+    if(!clients[users[i]].inBattle){
+      online_players.push(users[i]);
+    }
+  }
+  return online_players;
 }
 
 io.sockets.on('connection', function (socket) {
@@ -59,12 +78,13 @@ io.sockets.on('connection', function (socket) {
       users.push(data);
       socket.user = data;
       clients[socket.user] = socket;
-      socket.broadcast.emit('users', { users : users })
+      socket.emit('users', { users : online_players() })
+      socket.broadcast.emit('users', { users : online_players() })
     }
   });
 
   socket.on('users', function() {
-    socket.emit('users', { users : users })
+    socket.broadcast.emit('users', { users : online_players() });
   })
 
   socket.on('disconnect', function () {
@@ -82,10 +102,17 @@ io.sockets.on('connection', function (socket) {
     };
   });
 
+  socket.on("battle_over", function(data, fn){
+
+  });
+
   socket.on('begin_battle', function (data, fn) {
     setup();
-    socket.emit("setup", { first: f, second: s, operator: o });
-    clients[data].emit('setup', { first: f, second: s, operator: o });
+    socket.inBattle = true;
+    clients[data].inBattle = true;
+    socket.broadcast.emit('users', { users : online_players() });
+    socket.emit("setup", { first: f, second: s, operator: o, answers: answers });
+    clients[data].emit('setup', { first: f, second: s, operator: o , answers: answers });
   });
 
 });
