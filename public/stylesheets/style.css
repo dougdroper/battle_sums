@@ -10,6 +10,7 @@ a {
 }
 
 #calc_box{
+  display: none;
   width: 640px;
   height: 145px;
   border: 2px solid #000;
@@ -58,4 +59,23 @@ div.wrong {
   top: -270px;
   left: 700px;
   display: none;
+}
+
+div#users {
+  display: none;
+}
+
+div#users li {
+  list-style-type: none;
+  border: 1px solid #000;
+  background: #ddd;
+  color: red;
+  width: 140px;
+  padding: 5px 10px;
+  margin-bottom: 10px;
+}
+
+span.accept{
+  background: green;
+  border: 1px solid #000;
 }

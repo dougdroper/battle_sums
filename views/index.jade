@@ -1,5 +1,15 @@
 h1= "! Battle Sums !"
 
+div#user
+  p enter username to begin
+  input#user
+
+div#users
+  p click to !battle! a user:
+  ul
+
+div#request
+
 div#calc_box
   div#left
   div#operation
@@ -13,26 +23,84 @@ div.wrong
 script
   var socket = io.connect();
   var first, second, operator, answer;
+  var your_user;
 
   function updateContent(){
+    $("#request").hide();
+    $("#users").hide();
+    $("#calc_box").show();
     $("#left").html(first);
     $("#operation").html(operator);
     $("#right").html(second);
   }
 
-  socket.on('setup', function (data) {
+  socket.on('setup', function(data) {
     first = data.first;
     second = data.second;
     operator = data.operator;
     updateContent();
   });
 
-  $('body').keyup(function(e){
-    if(e.keyCode == 13){
-      if ($("#answer").val() == answer){
-        flash("right");
-      } else {
-        flash("wrong")
-      }
+  socket.on('users', function (users) {
+    $('#users ul').empty();
+    for (var i in users.users) {
+      $('#users ul').append($('<li>')
+      .attr('id', users.users[i])
+      .attr('class', "online_users")
+      .text(users.users[i]));
     }
-  })
+  });
+
+  socket.on('request_battle', function(data) {
+    $("#request").append($("<p>")
+    .text(data.requester + " wants to do battle"))
+    .append($("<span>")
+    .attr('id', data.requester)
+    .attr("class", "accept")
+    .text("accept?"));
+  });
+
+  function join(){
+    $("#user").hide();
+    $("#users").show();
+    socket.emit('users');
+  };
+
+  $("#user").bind('keypress', function(e){
+    if(e.keyCode == 13){
+      your_user = $("input#user").val();
+      socket.emit('user', your_user, function(success){
+        if(success){
+          join();
+        } else {
+          $("#user").prepend($('<p>')
+          .text('Sorry the username is already taken'));
+          $("input#user").val('');
+        }
+      });
+    }
+  });
+
+  $("li.online_users").live("click" , function(){
+    socket.emit('battle_user', $(this).attr("id"), function(success){
+      if(success){
+        $("#request").append($("<p>")
+        .text("Your request has been sent!"));
+      } else {
+        $("#users").prepend($('<p>')
+        .text("Sorry user unavailable"));
+      }
+    });
+  });
+
+  $(".accept").live("click", function(){
+    socket.emit('begin_battle', $(this).attr("id"), function(success){
+      if(success){
+
+      } else {
+
+      }
+    });
+  });
+
+
