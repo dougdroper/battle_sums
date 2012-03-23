@@ -5,10 +5,12 @@
 
 var express = require('express')
   , routes = require('./routes')
-  , sio = require('socket.io');
+  , sio = require('socket.io')
+  , sum = require('./lib/random_sum_generator');
+
+var f, s, o, answer;
 
 var app = module.exports = express.createServer();
-
 
 // Configuration
 
@@ -33,34 +35,24 @@ app.configure('production', function(){
 
 app.get('/', routes.index);
 
-
-
-function getRandomNumber(){
-  return Math.round(Math.random(12) * 10);
-};
-
-function getRandomOperator(){
-  var val = getRandomNumber();
-  switch(true){
-    case (val < 4):
-      return "+";
-      break;
-    case (val >= 4 && val < 6):
-      return "*";
-      break;
-    case (val >= 6 && val < 8):
-      return "/";
-      break;
-    default:
-      return "-";
-      break;
-  }
-}
-
 app.listen(3000);
 var io = sio.listen(app);
 
+function setup(){
+  f = sum.getRandomNumber();
+  s = sum.getRandomNumber();
+  o = sum.getRandomOperator();
+  answer = eval(f + o + s);
+  if(answer < 0 || answer % 1 != 0){
+    setup();
+  }
+}
+
 io.sockets.on('connection', function (socket) {
-  socket.emit('setup', { first: getRandomNumber(), second: getRandomNumber(), operator: getRandomOperator() });
+  setup();
+
+  socket.emit("setup", { first: f, second: s, operator: o });
+  socket.broadcast.emit('setup', { first: f, second: s, operator: o });
 });
+
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);

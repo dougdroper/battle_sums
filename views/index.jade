@@ -5,13 +5,34 @@ div#calc_box
   div#operation
   div#right
   div#equals =
-  input#answer 
+  input#answer
 
 div.right
 div.wrong
 
 script
   var socket = io.connect();
+  var first, second, operator, answer;
+
+  function updateContent(){
+    $("#left").html(first);
+    $("#operation").html(operator);
+    $("#right").html(second);
+  }
+
   socket.on('setup', function (data) {
-    console.log(data.first);
+    first = data.first;
+    second = data.second;
+    operator = data.operator;
+    updateContent();
   });
+
+  $('body').keyup(function(e){
+    if(e.keyCode == 13){
+      if ($("#answer").val() == answer){
+        flash("right");
+      } else {
+        flash("wrong")
+      }
+    }
+  })
