@@ -54,7 +54,7 @@ function setup_sums(i){
 }
 
 function setup(){
-  for(var i = 0; i < 10; i++){
+  for(var i = 0; i <= 40; i++){
     setup_sums(i)
   }
 }
@@ -102,8 +102,13 @@ io.sockets.on('connection', function (socket) {
     };
   });
 
-  socket.on("battle_over", function(data, fn){
+  socket.on("correct", function(data){
+    clients[data.player].emit('correct_move');
+  })
 
+  socket.on("battle_over", function(data){
+    socket.inBattle = false;
+    clients[data.player].emit('player_finished', data);  
   });
 
   socket.on('begin_battle', function (data, fn) {
@@ -111,12 +116,9 @@ io.sockets.on('connection', function (socket) {
     socket.inBattle = true;
     clients[data].inBattle = true;
     socket.broadcast.emit('users', { users : online_players() });
-    socket.emit("setup", { first: f, second: s, operator: o, answers: answers });
-    clients[data].emit('setup', { first: f, second: s, operator: o , answers: answers });
+    socket.emit("setup", { first: f, second: s, operator: o, answers: answers, battler: clients[data].user });
+    clients[data].emit('setup', { first: f, second: s, operator: o , answers: answers, battler: socket.user });
   });
-
 });
-
-
 
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
