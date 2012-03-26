@@ -137,7 +137,6 @@ function check_answer(){
   } else {
     updateContent();  
   }
-  
 }
 
 function your_score(){

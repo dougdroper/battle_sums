@@ -19,6 +19,7 @@ var app = module.exports = express.createServer();
 
 // Configuration
 
+
 app.configure(function(){
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
@@ -42,6 +43,10 @@ app.get('/', routes.index);
 
 app.listen(3000);
 var io = sio.listen(app);
+io.configure(function () { 
+  io.set("transports", ["xhr-polling"]); 
+  io.set("polling duration", 10); 
+});
 
 function setup_sums(i){
   f[i] = sum.getRandomNumber();
