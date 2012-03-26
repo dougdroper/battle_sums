@@ -43,6 +43,7 @@ app.get('/', routes.index);
 
 var port = process.env.PORT || 3000;
 app.listen(port);
+
 var io = sio.listen(app);
 io.configure(function () { 
   io.set("transports", ["xhr-polling"]); 
@@ -115,6 +116,10 @@ io.sockets.on('connection', function (socket) {
   socket.on("battle_over", function(data){
     socket.inBattle = false;
     clients[data.player].emit('player_finished', data);  
+  });
+
+  socket.on("abandon", function(data){
+    socket.inBattle = false;
   });
 
   socket.on('begin_battle', function (data, fn) {

@@ -112,3 +112,15 @@ span.accept{
 .battle_zone{
   display: none;
 }
+
+#abandon_battle{
+  border: 1px solid #000;
+  background: red;
+  color: black;
+  width: 140px;
+  padding: 5px 10px;
+  margin-bottom: 10px;  
+  position: absolute;
+  top: 70px;
+  left: 430px;
+}

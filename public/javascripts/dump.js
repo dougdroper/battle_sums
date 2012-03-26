@@ -52,6 +52,11 @@ $("document").ready(function(){
       check_answer();
     }
   });
+
+  $("#abandon_battle").click(function(){
+    socket.emit("abandon");
+    join();
+  });
 });
 
 function updateContent(){
@@ -107,9 +112,11 @@ socket.on("correct_move", function(){
 });
 
 function join(){
+  socket.emit('users');
   $("#user").hide();
   $("#users").show();
-  socket.emit('users');
+  $(".battle_zone").hide();
+  $("#calc_box").hide();
 };
 
 function check_answer(){
