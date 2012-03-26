@@ -41,7 +41,8 @@ app.configure('production', function(){
 
 app.get('/', routes.index);
 
-app.listen(3000);
+var port = process.env.PORT || 3000;
+app.listen(port);
 var io = sio.listen(app);
 io.configure(function () { 
   io.set("transports", ["xhr-polling"]); 
