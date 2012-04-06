@@ -8,6 +8,7 @@ var battler;
 var startTime;
 var endTime;
 var play_time;
+var BATTLE_LINE = 10;
 
 $("document").ready(function(){
   $("#user").bind('keypress', function(e){
@@ -15,7 +16,8 @@ $("document").ready(function(){
       your_user = $("input#user").val();
       socket.emit('user', your_user, function(success){
         if(success){
-          join();
+          socket.emit('users');
+          show_online_users();
         } else {
           $("#user").prepend($('<p>')
           .text('Sorry the username is already taken'));
@@ -25,10 +27,15 @@ $("document").ready(function(){
     }
   });
 
+  $("#new_game").click(function(){
+    socket.emit('users');
+    show_online_users();
+  });
+
   $("li.online_users").live("click" , function(){
     socket.emit('battle_user', $(this).attr("id"), function(success){
       if(success){
-        $("#request").append($("<p>")
+        $("#request").empty().show().append($("<p>")
         .text("Your request has been sent!"));
       } else {
         $("#users").prepend($('<p>')
@@ -54,8 +61,9 @@ $("document").ready(function(){
   });
 
   $("#abandon_battle").click(function(){
-    socket.emit("abandon");
-    join();
+    socket.emit("abandon", {battler: battler});
+    socket.emit('users');
+    show_online_users();
   });
 });
 
@@ -69,7 +77,21 @@ function updateContent(){
   $("#right").html(second[count]);
   $("#battler").html("You are fighting " + battler);
   $("#battler").attr('class', battler);
+  $("#battler_2").empty().css("background-color", "green")
   $("input#answer").val('');
+}
+
+function reset(){
+  $("#battler_1").show();
+  $("#battler_line_1").show();
+  count = 0;
+  correct = 0;
+  wrong = 0;
+  $("#result").hide();
+  $("#player_2_score").hide();
+  $("#battler").hide();
+  $("#battler_1").css("left", 0);
+  $("#battler_2").css("left", 0);
 }
 
 socket.on('setup', function(data) {
@@ -83,6 +105,10 @@ socket.on('setup', function(data) {
 });
 
 socket.on('users', function (users) {
+  listUsers(users);
+});
+
+function listUsers(users){
   $('#users ul').empty();
   users.users.splice(users.users.indexOf(your_user), 1);
   for (var i in users.users) {
@@ -91,19 +117,23 @@ socket.on('users', function (users) {
     .attr('class', "online_users")
     .text(users.users[i]));
   }
-});
+}
 
 socket.on('request_battle', function(data) {
-  $("#request").append($("<p>")
+  showRequest(data);
+});
+
+function showRequest(data){
+  $("#request").empty().show().append($("<p>")
   .text(data.requester + " wants to do battle"))
   .append($("<span>")
   .attr('id', data.requester)
   .attr("class", "accept")
   .text("accept?"));
-});
+}
 
 socket.on("player_finished", function(data){
-  opponent_score(data)
+  opponent_score(data);
 });
 
 socket.on("correct_move", function(){
@@ -111,8 +141,13 @@ socket.on("correct_move", function(){
   $("#battler_2").css("left", left + 91);
 });
 
-function join(){
-  socket.emit('users');
+socket.on("opponent_quit", function(){
+  $("#battler_2").css("background-color", "#000");
+  $("#battler_2").html(battler + " has quit");
+});
+
+function show_online_users(){
+  reset();
   $("#user").hide();
   $("#users").show();
   $(".battle_zone").hide();
@@ -130,15 +165,15 @@ function check_answer(){
     wrong++;
   }
   count++;
-  if(correct == 10){
+  if(correct == BATTLE_LINE){
     endTime = new Date();
-    play_time = (startTime - endTime) / 1000;
+    play_time = (endTime - startTime) / 1000;
     your_score();
     socket.emit('battle_over', {
       count: count, 
       wrong: wrong, 
       correct: correct, 
-      play_time: play_time , 
+      play_time: play_time, 
       player: $("#battler").attr("class")
     });
   } else {
@@ -149,18 +184,35 @@ function check_answer(){
 function your_score(){
   var a = parseInt($("#battler_1").css('left'));
   var b = parseInt($("#battler_2").css('left'));
+  $("#result").empty();
   if(a > b){
-    $("#result").html("You WIN!!!");
+    $("#result").append($("<h2>").text("Your score: You Win"));
   } else {
-    $("#result").html("You Lose!!!");
+    $("#result").append($("<h2>").text("Your score: You Lose"));
   }
+  your_result();
+}
+
+function your_result(){
   $("#calc_box").hide();
+  $("#battler_1").hide();
   $("#battler_line_1").hide();
-  $("#battler_1").empty().append($("<p>").text("play time" + play_time));
-  join();
+  $("#abandon_battle").hide();
+  $("#new_game").show();
+
+  $("#result").show();
+  $("#result").append($("<p>").text("Correct: " + correct));
+  $("#result").append($("<p>").text("Wrong: " + wrong));
+  $("#result").append($("<p>").text("Play time: " + play_time)); 
+  $("#result").append($("<p>").text("Count: " + count));
 }
 
 function opponent_score(data){
-  $("#player_2_score").append($("<p>").text("Correct" + data.correct));  
+  $("#player_2_score").empty().show();
+  $("#player_2_score").append($("<h2>").text(data.player + " score"));
+  $("#player_2_score").append($("<p>").text("Correct: " + data.correct));
+  $("#player_2_score").append($("<p>").text("Wrong: " + data.wrong));
+  $("#player_2_score").append($("<p>").text("Play time: " + data.play_time));
+  $("#player_2_score").append($("<p>").text("Count: " + data.count));
 }
 

@@ -84,6 +84,7 @@ io.sockets.on('connection', function (socket) {
       fn(true);
       users.push(data);
       socket.user = data;
+      socket.inBattle = false;
       clients[socket.user] = socket;
       socket.emit('users', { users : online_players() })
       socket.broadcast.emit('users', { users : online_players() })
@@ -91,6 +92,7 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on('users', function() {
+    socket.emit('users', { users : online_players() });
     socket.broadcast.emit('users', { users : online_players() });
   })
 
@@ -119,6 +121,7 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on("abandon", function(data){
+    clients[data.battler].emit('opponent_quit');
     socket.inBattle = false;
   });
 
