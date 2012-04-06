@@ -4,6 +4,7 @@ var your_user;
 var count = 0;
 var correct = 0;
 var wrong = 0;
+var position = 0;
 var battler;
 var startTime;
 var endTime;
@@ -11,6 +12,7 @@ var play_time;
 var BATTLE_LINE = 10;
 
 $("document").ready(function(){
+  $("input#user").focus();
   $("#user").bind('keypress', function(e){
     if(e.keyCode == 13){
       your_user = $("input#user").val();
@@ -71,14 +73,16 @@ function updateContent(){
   $("#request").hide();
   $("#users").hide();
   $("#calc_box").show();
+  $("#new_game").hide();
+  $("#abandon_battle").show();
   $(".battle_zone").show();
   $("#left").html(first[count]);
   $("#operation").html(operator[count]);
   $("#right").html(second[count]);
-  $("#battler").html("You are fighting " + battler);
+  $("#battler").show().html("You are fighting " + battler);
   $("#battler").attr('class', battler);
   $("#battler_2").empty().css("background-color", "green")
-  $("input#answer").val('');
+  $("input#answer").val('').focus();
 }
 
 function reset(){
@@ -141,6 +145,11 @@ socket.on("correct_move", function(){
   $("#battler_2").css("left", left + 91);
 });
 
+socket.on("wrong_move", function(){
+  var left = parseInt($("#battler_2").css('left'));
+  $("#battler_2").css("left", left - 91);
+});
+
 socket.on("opponent_quit", function(){
   $("#battler_2").css("background-color", "#000");
   $("#battler_2").html(battler + " has quit");
@@ -158,14 +167,23 @@ function check_answer(){
   var a = $("input#answer").val();
   if(a == answers[count]){
     correct++;
+    position++;
     var left = parseInt($("#battler_1").css('left'));
     $("#battler_1").css("left", left + 91);
     socket.emit("correct", {player: $("#battler").attr("class")});
   } else{
+    var left = parseInt($("#battler_1").css('left'));
+    if(left > 0){
+      position--;
+      $("#battler_1").css("left", left - 91);  
+      socket.emit("wrong", {player: $("#battler").attr("class")});
+    }
     wrong++;
   }
   count++;
-  if(correct == BATTLE_LINE){
+
+
+  if(position == BATTLE_LINE){
     endTime = new Date();
     play_time = (endTime - startTime) / 1000;
     your_score();
@@ -173,7 +191,8 @@ function check_answer(){
       count: count, 
       wrong: wrong, 
       correct: correct, 
-      play_time: play_time, 
+      play_time: play_time,
+      opponent: your_user,
       player: $("#battler").attr("class")
     });
   } else {
@@ -209,7 +228,7 @@ function your_result(){
 
 function opponent_score(data){
   $("#player_2_score").empty().show();
-  $("#player_2_score").append($("<h2>").text(data.player + " score"));
+  $("#player_2_score").append($("<h2>").text(data.opponent + " score"));
   $("#player_2_score").append($("<p>").text("Correct: " + data.correct));
   $("#player_2_score").append($("<p>").text("Wrong: " + data.wrong));
   $("#player_2_score").append($("<p>").text("Play time: " + data.play_time));

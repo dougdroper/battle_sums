@@ -115,6 +115,10 @@ io.sockets.on('connection', function (socket) {
     clients[data.player].emit('correct_move');
   })
 
+  socket.on("wrong", function(data){
+    clients[data.player].emit('wrong_move');
+  })
+
   socket.on("battle_over", function(data){
     socket.inBattle = false;
     clients[data.player].emit('player_finished', data);  
