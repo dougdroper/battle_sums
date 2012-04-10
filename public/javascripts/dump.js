@@ -1,15 +1,18 @@
-var socket = io.connect();
-var first, second, operator, answers;
-var your_user;
-var count = 0;
-var correct = 0;
-var wrong = 0;
-var position = 0;
-var battler;
-var startTime;
-var endTime;
-var play_time;
-var BATTLE_LINE = 10;
+var socket = io.connect(),
+    first,
+    second,
+    operator,
+    answers,
+    your_user,
+    count = 0,
+    correct = 0,
+    wrong = 0,
+    position = 0,
+    battler,
+    startTime,
+    endTime,
+    play_time,
+    BATTLE_LINE = 10;
 
 function reset() {
   $("#battler_1").show();
@@ -138,10 +141,10 @@ function showRequest(data) {
 }
 
 function listUsers(users) {
-  var i;
+  var i, max;
   $('#users ul').empty();
   users.users.splice(users.users.indexOf(your_user), 1);
-  for (i = 0; i < users.users.length; i++) {
+  for (i = 0, max = users.users.length; i < max; i += 1) {
     $('#users ul').append($('<li>')
       .attr('id', users.users[i])
       .attr('class', "online_users")
